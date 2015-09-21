@@ -3,37 +3,38 @@
 #------------------------------------------------------------------------------------------------
 
 
-
-#---------------------------------------- OPTIONS(trava para função recursiva não estourar a pilha) -----
+#---------------------------------------- OPTIONS -----
 options(expressions=1000)
 
 #---------------------------------------- FUNCTIONS -----
+
+#Seleciona o melhor caminho da franja e adiciona na árvore mínima
 pickBestOnFranja <- function(){
     #ordenando franja pelo menor peso
     franja <<- franja[order(franja[,3]),]
-    #franja <- franja[order(franja[,3]),]
     
+    #Pega o menor caminho da franja
     bestNode <- franja[1,]
     
-    #Se os nós já foram visitados este nó não é válido e deve ser excluido para não formar ciclo
+    #Se os vértices desse caminho já foram visitados este caminho não é válido e deve ser excluido da franja para não formar ciclo
     if(bestNode[,1] %in% visited & bestNode[,2] %in% visited){
         franja <<- franja[-1,]
+        #Depois de elimitar o caminho da franja executar a função novamente para recomeçar o processo
         pickBestOnFranja()
     }else{
-        #am[nrow(am)+1,] <<- bestNode[1,]
-        
+        #Se o caminho selecionado da franja é um caminho válido adicionar este caminho na árvore mínima
         am[nrow(am)+1,1] <<- as.character(bestNode[1,1])
         am[nrow(am),2] <<- as.character(bestNode[1,2])
         am[nrow(am),3] <<- bestNode[1,3]
-        
-        #am[nrow(am)+1,1] <- as.character(bestNode[1,1])
-        #am[nrow(am),2] <- as.character(bestNode[1,2])
-        #am[nrow(am),3] <- bestNode[1,3]
     }
 }
 
+
+#Retorna o próximo vértice que deve ter a sua franja avaliada
 findAvailNode <- function(){
+    #Vertice candidato a ser avaliado
     nodeCandidate <- NA
+    #Caso a árvore mínima esteja vazia(primeira execução), pegar um vértice qualquer
     if(nrow(am) == 0){
         i <- 1
         while(is.na(nodeCandidate) & i <= length(vertices)){
@@ -45,12 +46,16 @@ findAvailNode <- function(){
             i <- i + 1
         }
     } else{
+        #Se não é a primeira execução seleciona o último vértice "destino"
         nodeCandidate <- am[nrow(am),2]
+        #Caso o vértice candidato já tenha sido visitado ele não é utilizado, para não formar ciclos
         if(nodeCandidate %in% visited)
             nodeCandidate <- am[nrow(am),1]    
+        #Adiciona o vérice a lista de vértices visitados
         visited <<- c(visited, as.character(nodeCandidate))
     }
     
+    #Retornando o vértice encontrado
     as.character(nodeCandidate)
 }
 
@@ -215,32 +220,41 @@ a <- data.frame(
 
 
 
-#---------------------------------------- CODE -----
+#---------------------------------------- PROGRAMA -----
 
-vertices <- sort(unique(c(unique(a[,1]),unique(a[,2]))))
+    #---------------------------------------- VARIAVEIS -----
 
-visited <- character()
+    ### Lembrando que o grafo já foi declarado ali em cima, na variavel "a".
 
-#árvore minima
-    am <- data.frame(
-        v1 = character(),
-        v2 = character(),
-        p  = numeric(),
-        stringsAsFactors=FALSE
-        )
-#franjas
-    franja <- data.frame(
-        v1 = character(),
-        v2 = character(),
-        p  = numeric(),
-        stringsAsFactors=FALSE
-        ) 
+    #Lista com todos os vértices do grafo
+    vertices <- sort(unique(c(unique(a[,1]),unique(a[,2]))))
+    
+    #Lista que armazena os vértices já adicionados(Para ficar mais fácil de verificar os ciclos)
+    visited <- character()
+    
+    #árvore minima
+        am <- data.frame(
+            v1 = character(),
+            v2 = character(),
+            p  = numeric(),
+            stringsAsFactors=FALSE
+            )
+    #franjas
+        franja <- data.frame(
+            v1 = character(),
+            v2 = character(),
+            p  = numeric(),
+            stringsAsFactors=FALSE
+            ) 
 
+    #---------------------------------------- CÓDIGO -----
+
+    #Enquanto a franja tiver menos ocorrências do que o número de vértices-1, procure por um nó para a arvore mínima
     while(nrow(am) < length(vertices) - 1){
-        #pegando um nó não visitado para avaliar franja
+        #pegando um nó não visitado para avaliar a sua franja
         inspectedNode <- findAvailNode()
         
-        #setando a franja
+        #Buscando a franja do nó selecionado e adicionando no conjunto de franjas
         auxfranja <- subset(a, v1 == inspectedNode | v2 == inspectedNode)
         franja <- rbind(franja, data.frame(v1=auxfranja[,1], v2=auxfranja[,2], p=auxfranja[,3]))
         
